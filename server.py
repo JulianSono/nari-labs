@@ -6,6 +6,8 @@ from pathlib import Path
 import uuid
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
+from dia.model import DiffusionVocoderModel  # Adjust based on real class
+import torchaudio
 
 # Initialize FastAPI app
 app = FastAPI(title="Nari Labs DIA Voice Generation API")
@@ -22,13 +24,14 @@ class GenerationResponse(BaseModel):
     audio_path: str
     message: str
 
-class FakeModel:
-    def generate(self, **kwargs):
-        return b"FAKEAUDIO"
-
 def initialize_model():
-    print("⚠️ Using FakeModel instead of real DIA model.")
-    model = FakeModel()
+    model_path = Path("./checkpoints/dia_model.pt")  # Adjust to your actual model path
+    if not model_path.exists():
+        raise FileNotFoundError("Model checkpoint not found.")
+
+    model = DiffusionVocoderModel.load_model(model_path, device="cpu")  # or "cuda" if on GPU
+    model.eval()
+    print("✅ DIA model loaded successfully.")
     return model
 
 # Global model instance
@@ -39,7 +42,7 @@ async def startup_event():
     global model
     try:
         model = initialize_model()
-        print("Fake model initialized successfully")
+        print("Model initialized successfully")
     except Exception as e:
         print(f"Error initializing model: {e}")
         raise
@@ -50,22 +53,28 @@ async def generate_audio(request: GenerationRequest):
         raise HTTPException(status_code=500, detail="Model not initialized")
     
     try:
-        # Generate unique filename
         output_dir = Path("./output")
         output_dir.mkdir(exist_ok=True)
         filename = f"{uuid.uuid4()}.wav"
         output_path = output_dir / filename
-        
-        # Fake audio generation
-        with open(output_path, "wb") as f:
-            f.write(model.generate())
-        
+
+        print("🧠 Generating audio...")
+        audio = model.generate(
+            text=request.text,
+            emotion=request.emotion,
+            tone=request.tone,
+            pace=request.pace,
+        )
+
+        # Save using torchaudio
+        torchaudio.save(str(output_path), audio["waveform"], sample_rate=audio["sample_rate"])
+
         return GenerationResponse(
-            audio_path=str(output_path),
-            message="Audio generated successfully"
+            audio_path=f"/output/{filename}",
+            message="✅ Audio generated successfully"
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Audio generation failed: {str(e)}")
 
 # Mount the output directory for static file serving
 app.mount("/output", StaticFiles(directory="output"), name="output")
