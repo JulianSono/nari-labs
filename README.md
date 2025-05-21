@@ -117,4 +117,4 @@ python generate_local.py
 - The server automatically creates an `output` directory for generated audio files
 - Each generated audio file has a unique UUID filename
 - Make sure to have sufficient disk space for generated audio files
-- The server uses port 8000 by default 
+- The server uses port 8000 by default
