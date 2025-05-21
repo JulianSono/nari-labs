@@ -70,6 +70,10 @@ async def generate_audio(request: GenerationRequest):
 # Mount the output directory for static file serving
 app.mount("/output", StaticFiles(directory="output"), name="output")
 
+# Mount the frontend static files
+frontend_path = Path(__file__).parent / "frontend" / "dist"
+app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 
