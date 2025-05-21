@@ -40,42 +40,35 @@ class VoiceModel:
         # Create time array
         t = torch.linspace(0, duration_seconds, num_samples)
         
-        # Generate a more speech-like waveform
-        # Base frequency varies between 100-300 Hz (typical human voice range)
+        # Generate a simple voice-like tone
+        # Use a frequency in the human voice range (100-300 Hz)
         base_freq = 200.0
         
-        # Add some frequency variation to simulate speech
-        freq_variation = torch.sin(2 * torch.pi * 2 * t) * 50  # 2 Hz modulation
-        frequency = base_freq + freq_variation
+        # Create a simple sine wave
+        waveform = torch.sin(2 * torch.pi * base_freq * t)
         
-        # Generate the main carrier wave
-        carrier = torch.sin(2 * torch.pi * frequency * t)
+        # Add very subtle frequency variation
+        freq_variation = torch.sin(2 * torch.pi * 0.5 * t) * 10  # Very slow, subtle variation
+        waveform = torch.sin(2 * torch.pi * (base_freq + freq_variation) * t)
         
-        # Add amplitude modulation to simulate speech patterns
-        am_freq = 5.0  # Amplitude modulation frequency
-        am = 0.5 + 0.5 * torch.sin(2 * torch.pi * am_freq * t)
-        
-        # Combine carrier and amplitude modulation
-        waveform = carrier * am
-        
-        # Add subtle noise for breathiness
-        noise = torch.randn(num_samples) * 0.05
+        # Add very subtle noise for breathiness
+        noise = torch.randn(num_samples) * 0.02  # Reduced noise level
         waveform = waveform + noise
         
-        # Add emotion-based variations
+        # Simple emotion variations
         if emotion.lower() == "happy":
-            waveform = waveform * (1.0 + 0.2 * torch.sin(2 * torch.pi * 10 * t))
+            waveform = waveform * 1.1  # Slightly louder
         elif emotion.lower() == "sad":
-            waveform = waveform * (0.8 + 0.1 * torch.sin(2 * torch.pi * 5 * t))
+            waveform = waveform * 0.9  # Slightly quieter
         elif emotion.lower() == "angry":
-            waveform = waveform * (1.2 + 0.3 * torch.sin(2 * torch.pi * 15 * t))
+            waveform = waveform * 1.2  # Louder
             
-        # Add some random pauses to simulate speech
+        # Add natural pauses between words
         pause_mask = torch.ones(num_samples)
-        num_pauses = len(text) // 5  # Add a pause roughly every 5 characters
+        num_pauses = len(text) // 4  # Add a pause roughly every 4 characters
         for _ in range(num_pauses):
-            pause_start = torch.randint(0, num_samples - int(0.1 * sample_rate), (1,))
-            pause_length = int(0.1 * sample_rate)  # 0.1 second pause
+            pause_start = torch.randint(0, num_samples - int(0.15 * sample_rate), (1,))
+            pause_length = int(0.15 * sample_rate)  # 0.15 second pause
             pause_mask[pause_start:pause_start + pause_length] = 0
             
         waveform = waveform * pause_mask
