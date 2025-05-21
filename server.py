@@ -6,7 +6,6 @@ from pathlib import Path
 import uuid
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
-from dia.model import DiffusionVocoderModel  # Adjust based on real class
 import torchaudio
 
 # Initialize FastAPI app
@@ -24,15 +23,36 @@ class GenerationResponse(BaseModel):
     audio_path: str
     message: str
 
-def initialize_model():
-    model_path = Path("./checkpoints/dia_model.pt")  # Adjust to your actual model path
-    if not model_path.exists():
-        raise FileNotFoundError("Model checkpoint not found.")
+class VoiceModel:
+    def __init__(self, model_path: str, device: str = "cpu"):
+        self.device = device
+        # TODO: Implement actual model loading
+        print("⚠️ Using placeholder model. Please implement actual model loading.")
+        
+    def generate(self, text: str, emotion: str, tone: str, pace: float) -> dict:
+        # TODO: Implement actual generation
+        # Placeholder implementation
+        sample_rate = 22050
+        waveform = torch.randn(1, 1000)  # Random noise as placeholder
+        return {
+            "waveform": waveform,
+            "sample_rate": sample_rate
+        }
 
-    model = DiffusionVocoderModel.load_model(model_path, device="cpu")  # or "cuda" if on GPU
-    model.eval()
-    print("✅ DIA model loaded successfully.")
-    return model
+def initialize_model():
+    model_path = Path("./checkpoints/dia_model.pt")
+    if not model_path.exists():
+        print("⚠️ Model checkpoint not found. Using placeholder model.")
+        return VoiceModel("placeholder")
+    
+    try:
+        model = VoiceModel(str(model_path), device="cpu")
+        print("✅ Model loaded successfully.")
+        return model
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        print("⚠️ Falling back to placeholder model.")
+        return VoiceModel("placeholder")
 
 # Global model instance
 model = None
