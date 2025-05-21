@@ -21,12 +21,23 @@ class GenerationResponse(BaseModel):
     audio_path: str
     message: str
 
-# Initialize model (placeholder - replace with actual DIA model initialization)
 def initialize_model():
-    # TODO: Replace with actual DIA model initialization
-    # model = DIA.from_pretrained("./checkpoints/")
-    # return model
-    pass
+    """Initialize the DIA model from checkpoint."""
+    checkpoint_path = Path("./checkpoints/dia_model.pt")
+    
+    if not checkpoint_path.exists():
+        raise RuntimeError(
+            f"Model checkpoint not found at {checkpoint_path}. "
+            "Please ensure the checkpoint file exists in the checkpoints directory."
+        )
+    
+    try:
+        # Load model checkpoint
+        model = torch.load(checkpoint_path, map_location="cpu")
+        model.eval()  # Set to evaluation mode
+        return model
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model checkpoint: {str(e)}")
 
 # Global model instance
 model = None
@@ -36,6 +47,7 @@ async def startup_event():
     global model
     try:
         model = initialize_model()
+        print("DIA model loaded successfully")
     except Exception as e:
         print(f"Error initializing model: {e}")
         raise
