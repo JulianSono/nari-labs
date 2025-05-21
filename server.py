@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import uuid
 from typing import Optional
+from fastapi.staticfiles import StaticFiles
 
 # Initialize FastAPI app
 app = FastAPI(title="Nari Labs DIA Voice Generation API")
@@ -65,6 +66,9 @@ async def generate_audio(request: GenerationRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Mount the output directory for static file serving
+app.mount("/output", StaticFiles(directory="output"), name="output")
 
 if __name__ == "__main__":
     import uvicorn
