@@ -21,23 +21,14 @@ class GenerationResponse(BaseModel):
     audio_path: str
     message: str
 
+class FakeModel:
+    def generate(self, **kwargs):
+        return b"FAKEAUDIO"
+
 def initialize_model():
-    """Initialize the DIA model from checkpoint."""
-    checkpoint_path = Path("./checkpoints/dia_model.pt")
-    
-    if not checkpoint_path.exists():
-        raise RuntimeError(
-            f"Model checkpoint not found at {checkpoint_path}. "
-            "Please ensure the checkpoint file exists in the checkpoints directory."
-        )
-    
-    try:
-        # Load model checkpoint
-        model = torch.load(checkpoint_path, map_location="cpu")
-        model.eval()  # Set to evaluation mode
-        return model
-    except Exception as e:
-        raise RuntimeError(f"Failed to load model checkpoint: {str(e)}")
+    print("⚠️ Using FakeModel instead of real DIA model.")
+    model = FakeModel()
+    return model
 
 # Global model instance
 model = None
@@ -47,7 +38,7 @@ async def startup_event():
     global model
     try:
         model = initialize_model()
-        print("DIA model loaded successfully")
+        print("Fake model initialized successfully")
     except Exception as e:
         print(f"Error initializing model: {e}")
         raise
@@ -64,14 +55,9 @@ async def generate_audio(request: GenerationRequest):
         filename = f"{uuid.uuid4()}.wav"
         output_path = output_dir / filename
         
-        # TODO: Replace with actual DIA generation call
-        # audio = model.generate(
-        #     text=request.text,
-        #     emotion=request.emotion,
-        #     tone=request.tone,
-        #     pace=request.pace
-        # )
-        # audio.save(output_path)
+        # Fake audio generation
+        with open(output_path, "wb") as f:
+            f.write(model.generate())
         
         return GenerationResponse(
             audio_path=str(output_path),
