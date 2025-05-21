@@ -33,7 +33,30 @@ class VoiceModel:
         # TODO: Implement actual generation
         # Placeholder implementation
         sample_rate = 22050
-        waveform = torch.randn(1, 1000)  # Random noise as placeholder
+        # Estimate audio length based on text length (roughly 0.1 seconds per character)
+        # Adjust pace factor (0.5 to 2.0) to make it faster or slower
+        duration_seconds = len(text) * 0.1 / pace
+        num_samples = int(duration_seconds * sample_rate)
+        
+        # Generate a more interesting waveform (sine wave with varying frequency)
+        t = torch.linspace(0, duration_seconds, num_samples)
+        frequency = 440.0  # A4 note
+        waveform = torch.sin(2 * torch.pi * frequency * t)
+        
+        # Add some variation based on emotion and tone
+        if emotion.lower() == "happy":
+            frequency *= 1.2
+        elif emotion.lower() == "sad":
+            frequency *= 0.8
+            
+        # Add some noise for realism
+        noise = torch.randn(num_samples) * 0.1
+        waveform = waveform + noise
+        
+        # Normalize and reshape to match torchaudio format (channels, samples)
+        waveform = waveform / torch.max(torch.abs(waveform))
+        waveform = waveform.unsqueeze(0)  # Add channel dimension
+        
         return {
             "waveform": waveform,
             "sample_rate": sample_rate
